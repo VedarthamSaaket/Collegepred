@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { BookOpen, LogOut, User } from 'lucide-react';
 
@@ -14,6 +14,7 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
 
   return (
@@ -54,7 +55,10 @@ export function Navbar() {
                   <span>{session.user.name}</span>
                 </div>
                 <button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={async () => {
+                    await signOut({ redirect: false });
+                    router.push('/login');
+                  }}
                   className="px-3 py-1.5 text-sm font-semibold italic text-[#8B653B] hover:text-[#3A2917] hover:bg-[#F5EDE4]/50 rounded-lg transition-colors"
                 >
                   <LogOut className="w-4 h-4 md:mr-1.5 inline-block" />
