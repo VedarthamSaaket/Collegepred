@@ -10,7 +10,8 @@ interface Answer {
   body: string;
   accepted: boolean;
   createdAt: string;
-  user: { id: string; name: string | null };
+  userId: string;
+  author: string | null;
 }
 
 interface QuestionDetail {
@@ -18,8 +19,9 @@ interface QuestionDetail {
   title: string;
   body: string;
   tags: string[];
-  views: number;
-  user: { id: string; name: string | null };
+  viewCount: number;
+  userId: string;
+  author: string | null;
   createdAt: string;
   answers: Answer[];
 }
@@ -128,7 +130,7 @@ export default function DiscussThreadPage() {
     );
   }
 
-  const isAuthor = session?.user?.id === question.user.id;
+  const isAuthor = session?.user?.id === question.userId;
   const timeAgo = (date: string) => {
     const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
     if (seconds < 60) return 'just now';
@@ -150,9 +152,9 @@ export default function DiscussThreadPage() {
         <div className="bg-white/80 backdrop-blur-sm border border-[#D4B896] rounded-xl p-8 mb-6 shadow-sm">
           <h1 className="text-3xl text-[#3A2917] mb-3 font-semibold italic">{question.title}</h1>
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs text-[#B8A080]">{question.user.name ?? 'Anonymous'}</span>
+            <span className="text-xs text-[#B8A080]">{question.author ?? 'Anonymous'}</span>
             <span className="text-xs text-[#B8A080]">{timeAgo(question.createdAt)}</span>
-            <span className="text-xs text-[#B8A080]">{question.views} views</span>
+            <span className="text-xs text-[#B8A080]">{question.viewCount} views</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mb-4">
             {question.tags.map((tag) => (
@@ -181,9 +183,9 @@ export default function DiscussThreadPage() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#3A2917]">
-                      {answer.user.name ?? 'Anonymous'}
-                    </span>
+                      <span className="text-sm font-semibold text-[#3A2917]">
+                        {answer.author ?? 'Anonymous'}
+                      </span>
                     <span className="text-xs text-[#B8A080]">{timeAgo(answer.createdAt)}</span>
                   </div>
                   {isAuthor && !answer.accepted && (

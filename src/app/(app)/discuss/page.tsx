@@ -11,9 +11,9 @@ interface Question {
   title: string;
   body: string;
   tags: string[];
-  answers: { id: string }[];
-  views: number;
-  user: { name: string | null };
+  answerCount: number;
+  viewCount: number;
+  author: string | null;
   createdAt: string;
 }
 
@@ -70,8 +70,19 @@ export default function DiscussPage() {
         body: JSON.stringify({ title: askTitle, body: askBody, tags: askTags }),
       });
       if (res.ok) {
-        const question = await res.json();
-        setQuestions((prev) => [question, ...prev]);
+        const result = await res.json();
+        // Normalize the response shape to match the Question interface
+        const newQuestion: Question = {
+          id: result.id,
+          title: result.title,
+          body: result.body,
+          tags: result.tags || [],
+          answerCount: 0,
+          viewCount: 0,
+          author: result.author || 'Anonymous',
+          createdAt: result.createdAt || new Date().toISOString(),
+        };
+        setQuestions((prev) => [newQuestion, ...prev]);
         setShowAskModal(false);
         setAskTitle('');
         setAskBody('');
@@ -183,8 +194,8 @@ export default function DiscussPage() {
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs text-[#B8A080]">{question.answers.length} answers</span>
-                    <span className="text-xs text-[#B8A080]">{question.views} views</span>
+                    <span className="text-xs text-[#B8A080]">{question.answerCount} answers</span>
+                    <span className="text-xs text-[#B8A080]">{question.viewCount} views</span>
                     <span className="text-xs text-[#B8A080]">{timeAgo(question.createdAt)}</span>
                   </div>
                 </div>
