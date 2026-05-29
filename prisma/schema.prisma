@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String?
+  password          String?
+  image             String?
+  emailVerified     DateTime?
+  verificationToken String?        @unique
+  resetToken        String?        @unique
+  resetTokenExpires DateTime?
+  createdAt         DateTime       @default(now())
+  lastLoginAt       DateTime?
+  savedColleges     SavedCollege[]
+  comparisons       Comparison[]
+  questions         Question[]
+  answers           Answer[]
+}
+
+model College {
+  id            String           @id @default(cuid())
+  name          String
+  slug          String           @unique
+  location      String
+  city          String
+  state         String
+  type          CollegeType
+  rating        Float            @default(0)
+  totalFees     Int
+  overview      String           @db.Text
+  established   Int?
+  website       String?
+  logoUrl       String?
+  imageUrl      String?
+  naacGrade     String?
+  nirfRank      Int?
+  placementAvg  Int?
+  placementMax  Int?
+  placementPct  Float?
+  topRecruiters String[]
+  courses       Course[]
+  reviews       Review[]
+  cutoffs       CollegeCutoff[]
+  savedBy       SavedCollege[]
+  searchVector  Unsupported("tsvector")? @map("search_vector")
+  createdAt     DateTime         @default(now())
+
+  @@index([rating])
+  @@index([totalFees])
+  @@index([state])
+  @@index([type])
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  college    College  @relation(fields: [collegeId], references: [id])
+  collegeId  String
+  name       String
+  duration   Int
+  fees       Int
+  seats      Int?
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  college   College  @relation(fields: [collegeId], references: [id])
+  collegeId String
+  author    String
+  rating    Float
+  body      String   @db.Text
+  category  String
+  createdAt DateTime @default(now())
+}
+
+model CollegeCutoff {
+  id        String   @id @default(cuid())
+  college   College  @relation(fields: [collegeId], references: [id])
+  collegeId String
+  exam      ExamType
+  category  Category @default(GENERAL)
+  rankMin   Int
+  rankMax   Int
+  year      Int      @default(2024)
+  branch    String?
+}
+
+model SavedCollege {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  college   College  @relation(fields: [collegeId], references: [id])
+  collegeId String
+  savedAt   DateTime @default(now())
+
+  @@unique([userId, collegeId])
+}
+
+model Comparison {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  collegeIds String[]
+  name       String?
+  createdAt  DateTime @default(now())
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  title     String
+  body      String   @db.Text
+  tags      String[]
+  answers   Answer[]
+  createdAt DateTime @default(now())
+  views     Int      @default(0)
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  body       String   @db.Text
+  accepted   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+enum CollegeType {
+  IIT
+  NIT
+  IIIT
+  DEEMED
+  STATE
+  PRIVATE
+}
+
+enum ExamType {
+  JEE_MAINS
+  JEE_ADVANCED
+  EAMCET_TS
+  EAMCET_AP
+}
+
+enum Category {
+  GENERAL
+  OBC
+  SC
+  ST
+  EWS
+}
