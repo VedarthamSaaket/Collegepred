@@ -21,7 +21,7 @@ interface CollegeListItem {
 }
 
 interface CollegesResponse {
-  colleges: CollegeListItem[];
+  data: CollegeListItem[];
   total: number;
   page: number;
   limit: number;
@@ -33,6 +33,7 @@ const INDIAN_STATES = [
   'Uttar Pradesh', 'Gujarat', 'Rajasthan', 'West Bengal', 'Delhi',
   'Madhya Pradesh', 'Bihar', 'Punjab', 'Haryana', 'Odisha',
   'Kerala', 'Assam', 'Chhattisgarh', 'Jharkhand', 'Uttarakhand',
+  'Chandigarh', 'Himachal Pradesh', 'Meghalaya', 'Sikkim',
 ];
 
 export default function CollegesPage() {
@@ -64,14 +65,15 @@ export default function CollegesPage() {
 
     try {
       const res = await fetch(`/api/colleges?${params}`);
-      const data: CollegesResponse = await res.json();
-      const incoming = Array.isArray(data?.colleges) ? data.colleges : [];
+      const json: CollegesResponse = await res.json();
+      // API returns { data: [...], total, page, limit }
+      const incoming = Array.isArray(json?.data) ? json.data : [];
       if (append) {
         setColleges((prev) => [...prev, ...incoming]);
       } else {
         setColleges(incoming);
       }
-      setTotal(data?.total ?? 0);
+      setTotal(json?.total ?? 0);
     } catch {
       // Silent fail
     } finally {
