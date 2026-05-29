@@ -33,6 +33,7 @@ model College {
   city          String
   state         String
   type          CollegeType
+  womenOnly     Boolean          @default(false)
   rating        Float            @default(0)
   totalFees     Int
   overview      String           @db.Text
@@ -101,6 +102,7 @@ model CollegeCutoff {
   collegeId String
   exam      ExamType
   category  Category @default(GENERAL)
+  gender    Gender   @default(ALL)
   rankMin   Int
   rankMax   Int
   year      Int      @default(2024)
@@ -164,6 +166,12 @@ enum ExamType {
   JEE_ADVANCED
   EAMCET_TS
   EAMCET_AP
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ALL
 }
 
 enum Category {

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const rankStr = searchParams.get('rank');
     const category = searchParams.get('category') || 'GENERAL';
     const branch = searchParams.get('branch') || '';
+    const gender = searchParams.get('gender') || 'ALL';
 
     if (!exam || !rankStr) {
       return NextResponse.json({ error: 'Exam and rank are required' }, { status: 422 });
@@ -63,6 +64,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 422 });
     }
 
+    const validGenders = ['ALL', 'MALE', 'FEMALE'];
+    if (!validGenders.includes(gender)) {
+      return NextResponse.json({ error: 'Invalid gender' }, { status: 422 });
+    }
+
     type ExamType = 'JEE_MAINS' | 'JEE_ADVANCED' | 'EAMCET_TS' | 'EAMCET_AP';
     type CategoryType = 'GENERAL' | 'OBC' | 'SC' | 'ST' | 'EWS';
 
@@ -70,7 +76,7 @@ export async function GET(request: NextRequest) {
     const categoryEnum = category as CategoryType;
 
     type CutoffWithCollege = Prisma.CollegeCutoffGetPayload<{
-      include: { college: { select: { id: true; name: true; slug: true; city: true; state: true; type: true; rating: true } } }
+      include: { college: { select: { id: true; name: true; slug: true; city: true; state: true; type: true; rating: true; womenOnly: true } } }
     }>;
 
     const where: Prisma.CollegeCutoffWhereInput = {
@@ -82,6 +88,16 @@ export async function GET(request: NextRequest) {
 
     if (branch.trim()) {
       where.branch = { contains: branch.trim(), mode: 'insensitive' };
+    }
+
+    // Gender filtering
+    if (gender === 'MALE') {
+      // Exclude women-only colleges, only show male/all cutoffs
+      where.college = { womenOnly: false };
+      where.gender = { in: ['MALE', 'ALL'] as const };
+    } else if (gender === 'FEMALE') {
+      // Only show female/all cutoffs (women-only colleges still apply)
+      where.gender = { in: ['FEMALE', 'ALL'] as const };
     }
 
     const cutoffs = await prisma.collegeCutoff.findMany({
@@ -96,6 +112,7 @@ export async function GET(request: NextRequest) {
             state: true,
             type: true,
             rating: true,
+            womenOnly: true,
           },
         },
       },
@@ -103,13 +120,22 @@ export async function GET(request: NextRequest) {
     });
 
     if (cutoffs.length === 0 && branch.trim()) {
+      const fallbackWhere: Prisma.CollegeCutoffWhereInput = {
+        exam: examEnum,
+        category: categoryEnum,
+        rankMin: { lte: rank },
+        rankMax: { gte: rank },
+      };
+
+      if (gender === 'MALE') {
+        fallbackWhere.college = { womenOnly: false };
+        fallbackWhere.gender = { in: ['MALE', 'ALL'] as const };
+      } else if (gender === 'FEMALE') {
+        fallbackWhere.gender = { in: ['FEMALE', 'ALL'] as const };
+      }
+
       const fallback = await prisma.collegeCutoff.findMany({
-        where: {
-          exam: examEnum,
-          category: categoryEnum,
-          rankMin: { lte: rank },
-          rankMax: { gte: rank },
-        },
+        where: fallbackWhere,
         include: {
           college: {
             select: {
@@ -120,6 +146,7 @@ export async function GET(request: NextRequest) {
               state: true,
               type: true,
               rating: true,
+              womenOnly: true,
             },
           },
         },

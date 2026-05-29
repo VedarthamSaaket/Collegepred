@@ -1,4 +1,4 @@
-import { PrismaClient, CollegeType, ExamType, Category } from '@prisma/client';
+import { PrismaClient, CollegeType, ExamType, Category, Gender } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
@@ -1211,6 +1211,7 @@ type CutoffInput = {
   collegeSlug: string;
   exam: ExamType;
   category: Category;
+  gender: Gender;
   rankMin: number;
   rankMax: number;
   year: number;
@@ -1252,6 +1253,7 @@ function loadJeeAdvancedCutoffs(
       collegeSlug: slug,
       exam: ExamType.JEE_ADVANCED,
       category: cat,
+      gender: Gender.ALL,
       rankMin: Math.min(openRank, closeRank),
       rankMax: Math.max(openRank, closeRank),
       year: 2024,
@@ -1298,6 +1300,7 @@ function loadJeeMainsNitsCutoffs(
       collegeSlug: slug,
       exam: ExamType.JEE_MAINS,
       category: cat,
+      gender: Gender.ALL,
       rankMin: Math.min(openRank, closeRank),
       rankMax: Math.max(openRank, closeRank),
       year: 2024,
@@ -1330,12 +1333,17 @@ function loadEamcetCutoffs(
     p1Map.set(makeKey(row), row);
   }
 
-  const CAT_COLS: Array<{ col: string; cat: Category }> = [
-    { col: 'OC Boys', cat: Category.GENERAL },
-    { col: 'EWS Boys', cat: Category.EWS },
-    { col: 'SC Boys', cat: Category.SC },
-    { col: 'ST Boys', cat: Category.ST },
-    { col: 'BC-A Boys', cat: Category.OBC },
+  const CAT_COLS: Array<{ col: string; cat: Category; gender: Gender }> = [
+    { col: 'OC Boys', cat: Category.GENERAL, gender: Gender.MALE },
+    { col: 'EWS Boys', cat: Category.EWS, gender: Gender.MALE },
+    { col: 'SC Boys', cat: Category.SC, gender: Gender.MALE },
+    { col: 'ST Boys', cat: Category.ST, gender: Gender.MALE },
+    { col: 'BC-A Boys', cat: Category.OBC, gender: Gender.MALE },
+    { col: 'OC Girls', cat: Category.GENERAL, gender: Gender.FEMALE },
+    { col: 'EWS Girls', cat: Category.EWS, gender: Gender.FEMALE },
+    { col: 'SC Girls', cat: Category.SC, gender: Gender.FEMALE },
+    { col: 'ST Girls', cat: Category.ST, gender: Gender.FEMALE },
+    { col: 'BC-A Girls', cat: Category.OBC, gender: Gender.FEMALE },
   ];
 
   const cutoffs: CutoffInput[] = [];
@@ -1346,7 +1354,7 @@ function loadEamcetCutoffs(
     if (!slug) continue;
     const p1Row = p1Map.get(makeKey(p3Row));
     if (!p1Row) continue;
-    for (const { col, cat } of CAT_COLS) {
+    for (const { col, cat, gender } of CAT_COLS) {
       const openVal = parseFloat(p1Row[col] ?? '');
       const closeVal = parseFloat(p3Row[col] ?? '');
       if (isNaN(openVal) || isNaN(closeVal) || openVal <= 0 || closeVal <= 0) continue;
@@ -1354,6 +1362,7 @@ function loadEamcetCutoffs(
         collegeSlug: slug,
         exam,
         category: cat,
+        gender,
         rankMin: Math.round(Math.min(openVal, closeVal)),
         rankMax: Math.round(Math.max(openVal, closeVal)),
         year: 2024,
@@ -1705,6 +1714,7 @@ async function main() {
       collegeId: freshSlugToId.get(c.collegeSlug)!,
       exam: c.exam,
       category: c.category,
+      gender: c.gender,
       rankMin: c.rankMin,
       rankMax: c.rankMax,
       year: c.year,

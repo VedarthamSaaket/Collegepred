@@ -10,6 +10,11 @@ const EXAMS = [
 ];
 
 const CATEGORIES = ['GENERAL', 'OBC', 'SC', 'ST', 'EWS'];
+const GENDERS = [
+  { value: 'ALL', label: 'All Genders' },
+  { value: 'MALE', label: 'Male' },
+  { value: 'FEMALE', label: 'Female' },
+];
 
 interface Prediction {
   college: {
@@ -31,6 +36,7 @@ export default function PredictorPage() {
   const [exam, setExam] = useState('');
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('GENERAL');
+  const [gender, setGender] = useState('ALL');
   const [branch, setBranch] = useState('');
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +61,7 @@ export default function PredictorPage() {
     }
 
     setLoading(true);
-    const params = new URLSearchParams({ exam, rank, category });
+    const params = new URLSearchParams({ exam, rank, category, gender });
     if (branch.trim()) params.set('branch', branch.trim());
 
     try {
@@ -130,6 +136,19 @@ export default function PredictorPage() {
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#3A2917] mb-2">Gender</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-[#D4B896] rounded-lg text-[#3A2917] focus:outline-none focus:ring-2 focus:ring-[#543D23]/30 focus:border-[#543D23]"
+                >
+                  {GENDERS.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
                   ))}
                 </select>
               </div>
