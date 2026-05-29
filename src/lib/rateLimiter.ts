@@ -16,6 +16,8 @@ const defaults: Record<string, RateLimitConfig> = {
   discuss: { maxRequests: 10, windowMs: 60_000 },      // 10 posts per minute
   predict: { maxRequests: 30, windowMs: 60_000 },      // 30 predictions per minute
   colleges: { maxRequests: 100, windowMs: 60_000 },    // 100 college searches per minute
+  saved: { maxRequests: 30, windowMs: 60_000 },        // 30 save/unsave actions per minute
+  compare: { maxRequests: 20, windowMs: 60_000 },      // 20 comparison requests per minute
 };
 
 export function getRateLimitKey(identifier: string, type: keyof typeof defaults = 'api'): string {
