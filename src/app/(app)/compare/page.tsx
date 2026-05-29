@@ -61,7 +61,6 @@ const metrics: Metric[] = [
   { label: 'Hostel Compulsory', section: 'Hostel', render: (c) => c.hostelCompulsory ? 'Yes (1st yr)' : 'No' },
   { label: 'Hostel Fees / yr', section: 'Hostel', render: (c) => c.hostelFeesPerYear ? `₹${c.hostelFeesPerYear.toLocaleString()}` : '—', highlight: true, higherBetter: false },
   { label: 'Mess Fees / yr', section: 'Hostel', render: (c) => c.messFees ? `₹${c.messFees.toLocaleString()}` : '—' },
-  { label: 'Transport Fees / yr', section: 'Hostel', render: (c) => c.transportFees ? `₹${c.transportFees.toLocaleString()}` : '—' },
   // Placements
   { label: 'Avg Package', section: 'Placements', render: (c) => c.placementAvg ? `₹${(c.placementAvg / 100000).toFixed(1)}L` : '—', highlight: true, higherBetter: true },
   { label: 'Highest Package', section: 'Placements', render: (c) => c.placementMax ? `₹${(c.placementMax / 100000).toFixed(0)}L` : '—', highlight: true, higherBetter: true },

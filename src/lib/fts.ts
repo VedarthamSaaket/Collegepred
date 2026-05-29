@@ -41,7 +41,7 @@ export async function searchColleges(options: FTSOptions): Promise<{ data: FTSRe
 
   if (query.trim()) {
     const sanitized = sanitizeSearchQuery(query);
-    if (sanitized) {
+    if (sanitized.length > 0) {
       const tsquery = sanitized
         .split(/\s+/)
         .filter(Boolean)

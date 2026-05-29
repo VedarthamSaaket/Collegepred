@@ -46,6 +46,21 @@ model College {
   placementMax  Int?
   placementPct  Float?
   topRecruiters String[]
+  hostelAvailable  Boolean        @default(false)
+  hostelCompulsory Boolean        @default(false)
+  hostelFeesPerYear Int?
+  accommodationTypes String[]
+  transportFees    Int?
+  messFees         Int?
+  tuitionFees      Int?
+  examFees         Int?
+  otherFees        Int?
+  accreditations    String[]
+  campusArea       String?
+  totalStudents    Int?
+  facultyStudentRatio String?
+  libraryBooks     Int?
+  researchPapers   Int?
   courses       Course[]
   reviews       Review[]
   cutoffs       CollegeCutoff[]

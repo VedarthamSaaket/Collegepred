@@ -6,17 +6,14 @@ import { useSession } from 'next-auth/react';
 
 interface SavedCollege {
   id: string;
-  collegeId: string;
-  college: {
-    id: string;
-    name: string;
-    slug: string;
-    city: string;
-    state: string;
-    type: string;
-    rating: number;
-    totalFees: number;
-  };
+  name: string;
+  slug: string;
+  city: string;
+  state: string;
+  type: string;
+  rating: number;
+  totalFees: number;
+  imageUrl?: string | null;
 }
 
 interface SavedComparison {
@@ -36,11 +33,11 @@ export default function SavedPage() {
     async function fetchSaved() {
       try {
         const res = await fetch('/api/saved');
-        if (res.ok) {
-          const data = await res.json();
-          setSavedColleges(data.savedColleges || data.colleges || []);
-          setComparisons(data.comparisons || []);
-        }
+      if (res.ok) {
+        const data = await res.json();
+        setSavedColleges(data.savedColleges || data.colleges || []);
+        setComparisons(data.comparisons || []);
+      }
       } catch {
         // Silent fail
       } finally {
@@ -58,7 +55,7 @@ export default function SavedPage() {
         body: JSON.stringify({ collegeId }),
       });
       if (res.ok) {
-        setSavedColleges((prev) => prev.filter((sc) => sc.collegeId !== collegeId));
+        setSavedColleges((prev) => prev.filter((sc) => sc.id !== collegeId));
       }
     } catch {
       // Silent fail
@@ -111,10 +108,10 @@ export default function SavedPage() {
                     <div key={saved.id} className="bg-white/80 backdrop-blur-sm border border-[#D4B896] rounded-xl p-5 hover:border-[#543D23]/50 transition-all group shadow-sm">
                       <div className="flex items-start justify-between mb-3">
                         <span className="px-2 py-0.5 bg-[#543D23] text-white text-xs font-semibold rounded">
-                          {saved.college.type}
+                          {saved.type}
                         </span>
                         <button
-                          onClick={() => handleRemove(saved.collegeId)}
+                          onClick={() => handleRemove(saved.id)}
                           className="opacity-0 group-hover:opacity-100 text-[#B8A080] hover:text-red-500 transition-all"
                           aria-label="Remove from saved"
                         >
@@ -123,22 +120,22 @@ export default function SavedPage() {
                           </svg>
                         </button>
                       </div>
-                      <Link href={`/colleges/${saved.college.slug}`}>
+                      <Link href={`/colleges/${saved.slug}`}>
                         <h3 className="text-lg text-[#3A2917] mb-1 hover:text-[#543D23] font-semibold italic">
-                          {saved.college.name}
+                          {saved.name}
                         </h3>
                       </Link>
                       <p className="text-xs text-[#8B653B] mb-3">
-                        {saved.college.city}, {saved.college.state}
+                        {saved.city}, {saved.state}
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          {ratingCircles(saved.college.rating).map((filled, i) => (
+                          {ratingCircles(saved.rating).map((filled, i) => (
                             <span key={i} className={`w-2 h-2 rounded-full ${filled ? 'bg-[#543D23]' : 'bg-[#D4B896]'}`} />
                           ))}
                         </div>
                         <span className="text-sm font-semibold text-[#3A2917]">
-                          ₹{saved.college.totalFees.toLocaleString()}
+                          ₹{saved.totalFees.toLocaleString()}
                         </span>
                       </div>
                     </div>
