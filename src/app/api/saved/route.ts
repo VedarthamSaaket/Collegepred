@@ -36,9 +36,24 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Fetch college names for each comparison
+    const allCollegeIds = [...new Set(comparisons.flatMap((c) => c.collegeIds))];
+    const colleges = allCollegeIds.length > 0
+      ? await prisma.college.findMany({
+          where: { id: { in: allCollegeIds } },
+          select: { id: true, name: true, slug: true },
+        })
+      : [];
+    const collegeMap = Object.fromEntries(colleges.map((c) => [c.id, c]));
+
+    const comparisonsWithNames = comparisons.map((c) => ({
+      ...c,
+      colleges: c.collegeIds.map((id) => collegeMap[id]).filter(Boolean),
+    }));
+
     return NextResponse.json({
-      savedColleges: savedColleges.map((sc: { college: { id: string; name: string; slug: string; city: string; state: string; type: string; rating: number; totalFees: number; imageUrl: string | null } }) => sc.college),
-      comparisons,
+      savedColleges: savedColleges.map((sc) => sc.college),
+      comparisons: comparisonsWithNames,
     });
   } catch (error) {
     logSecurityEvent('API_ERROR', { userId: session.user.id, path: '/api/saved', details: { error: String(error) } });
@@ -69,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { collegeId } = body;
+    const { collegeId, action } = body;
 
     if (!collegeId) {
       return NextResponse.json({ error: 'collegeId is required' }, { status: 422 });
@@ -80,19 +95,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'College not found' }, { status: 404 });
     }
 
+    // If action is 'remove' or it's already saved, handle unsave
+    if (action === 'remove') {
+      await prisma.savedCollege.deleteMany({
+        where: { userId: session.user.id, collegeId },
+      });
+      return NextResponse.json({ success: true, saved: false });
+    }
+
+    // Otherwise toggle
     const existing = await prisma.savedCollege.findUnique({
       where: { userId_collegeId: { userId: session.user.id, collegeId } },
     });
 
     if (existing) {
-      return NextResponse.json({ message: 'Already saved' });
+      await prisma.savedCollege.deleteMany({
+        where: { userId: session.user.id, collegeId },
+      });
+      return NextResponse.json({ success: true, saved: false });
     }
 
     await prisma.savedCollege.create({
       data: { userId: session.user.id, collegeId },
     });
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true, saved: true }, { status: 201 });
   } catch (error) {
     logSecurityEvent('API_ERROR', { userId: session.user.id, path: '/api/saved', details: { error: String(error) } });
     console.error('Saved create error:', error);
@@ -106,20 +133,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Rate limiting for delete
-  const rateKey = getRateLimitKey(session.user.id, 'saved');
-  const rateCheck = checkRateLimit(rateKey, 'saved');
-  if (!rateCheck.allowed) {
-    logSecurityEvent('RATE_LIMIT_HIT', {
-      userId: session.user.id,
-      details: { type: 'saved', resetAt: new Date(rateCheck.resetAt).toISOString() },
-    });
-    return NextResponse.json(
-      { error: 'Too many save/unsave actions. Please slow down.' },
-      { status: 429 }
-    );
-  }
-
   try {
     const body = await request.json();
     const { collegeId } = body;
@@ -128,12 +141,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'collegeId is required' }, { status: 422 });
     }
 
-    // IDOR check: delete only user's own saved items (enforced by userId filter)
     await prisma.savedCollege.deleteMany({
       where: { userId: session.user.id, collegeId },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, saved: false });
   } catch (error) {
     logSecurityEvent('API_ERROR', { userId: session.user.id, path: '/api/saved', details: { error: String(error) } });
     console.error('Saved delete error:', error);

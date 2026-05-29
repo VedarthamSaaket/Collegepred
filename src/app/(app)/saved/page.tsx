@@ -16,10 +16,17 @@ interface SavedCollege {
   imageUrl?: string | null;
 }
 
+interface SavedComparisonCollege {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface SavedComparison {
   id: string;
   name: string | null;
   collegeIds: string[];
+  colleges: SavedComparisonCollege[];
   createdAt: string;
 }
 
@@ -35,7 +42,7 @@ export default function SavedPage() {
         const res = await fetch('/api/saved');
       if (res.ok) {
         const data = await res.json();
-        setSavedColleges(data.savedColleges || data.colleges || []);
+        setSavedColleges(data.savedColleges || []);
         setComparisons(data.comparisons || []);
       }
       } catch {
@@ -56,6 +63,17 @@ export default function SavedPage() {
       });
       if (res.ok) {
         setSavedColleges((prev) => prev.filter((sc) => sc.id !== collegeId));
+      }
+    } catch {
+      // Silent fail
+    }
+  };
+
+  const handleRemoveComparison = async (comparisonId: string) => {
+    try {
+      const res = await fetch(`/api/compare/${comparisonId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setComparisons((prev) => prev.filter((c) => c.id !== comparisonId));
       }
     } catch {
       // Silent fail
@@ -151,21 +169,34 @@ export default function SavedPage() {
                 </h2>
                 <div className="space-y-4">
                   {comparisons.map((comp) => (
-                    <div key={comp.id} className="bg-white/80 backdrop-blur-sm border border-[#D4B896] rounded-xl p-5 flex items-center justify-between shadow-sm">
+                    <div key={comp.id} className="bg-white/80 backdrop-blur-sm border border-[#D4B896] rounded-xl p-5 flex items-center justify-between shadow-sm group">
                       <div>
                         <p className="text-lg text-[#3A2917] font-semibold italic">
-                          {comp.name ?? `Comparison from ${new Date(comp.createdAt).toLocaleDateString()}`}
+                          {comp.name || `Comparison · ${comp.colleges.length > 0 ? comp.colleges.map((c) => c.name).slice(0, 2).join(' vs ') + (comp.colleges.length > 2 ? ' & more' : '') : new Date(comp.createdAt).toLocaleDateString()}`}
                         </p>
                         <p className="text-xs text-[#B8A080] mt-1">
-                          {comp.collegeIds.length} colleges
+                          {comp.colleges.length > 0
+                            ? comp.colleges.map((c) => c.name).join(', ')
+                            : `${comp.collegeIds.length} colleges`}
                         </p>
                       </div>
-                      <Link
-                        href={`/compare?ids=${comp.collegeIds.join(',')}`}
-                        className="px-4 py-2 bg-[#543D23] text-white rounded-lg text-sm font-semibold hover:bg-[#3A2917] transition-colors"
-                      >
-                        View Comparison
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/compare?ids=${comp.collegeIds.join(',')}`}
+                          className="px-4 py-2 bg-[#543D23] text-white rounded-lg text-sm font-semibold hover:bg-[#3A2917] transition-colors"
+                        >
+                          View Comparison
+                        </Link>
+                        <button
+                          onClick={() => handleRemoveComparison(comp.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-[#B8A080] hover:text-red-500 transition-all"
+                          aria-label="Delete comparison"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

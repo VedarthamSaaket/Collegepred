@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
 interface CompareCollege {
@@ -98,6 +99,9 @@ function CompareContent() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('General');
 
+  const { data: session } = useSession();
+  const savedRef = useRef(false);
+
   useEffect(() => {
     if (ids.length < 2) {
       router.push('/colleges');
@@ -119,7 +123,17 @@ function CompareContent() {
       }
     }
     fetchColleges();
-  }, [ids.join(',')]);
+
+    // Auto-save comparison to DB when user views this page
+    if (session?.user && !savedRef.current) {
+      savedRef.current = true;
+      fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collegeIds: ids }),
+      }).catch(() => {}); // Silent fail
+    }
+  }, [ids.join(','), session?.user]);
 
   if (loading) {
     return (
