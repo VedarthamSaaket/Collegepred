@@ -6,10 +6,8 @@ import { checkRateLimit, getRateLimitKey } from '@/lib/rateLimiter';
 import { logSecurityEvent } from '@/lib/securityLogger';
 
 const EXAM_RANK_LIMITS: Record<string, number> = {
-  JEE_MAINS: 1500000,
   JEE_ADVANCED: 250000,
   EAMCET_TS: 200000,
-  EAMCET_AP: 200000,
 };
 
 export async function GET(request: NextRequest) {
@@ -54,7 +52,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: `Rank exceeds maximum for ${exam}` }, { status: 422 });
     }
 
-    const validExams = ['JEE_MAINS', 'JEE_ADVANCED', 'EAMCET_TS', 'EAMCET_AP'];
+    const validExams = ['JEE_ADVANCED', 'EAMCET_TS', 'EAMCET_AP'];
     if (!validExams.includes(exam)) {
       return NextResponse.json({ error: 'Invalid exam type' }, { status: 422 });
     }
@@ -69,7 +67,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid gender' }, { status: 422 });
     }
 
-    type ExamType = 'JEE_MAINS' | 'JEE_ADVANCED' | 'EAMCET_TS' | 'EAMCET_AP';
+    type ExamType = 'JEE_ADVANCED' | 'EAMCET_TS' | 'EAMCET_AP';
     type CategoryType = 'GENERAL' | 'OBC' | 'SC' | 'ST' | 'EWS';
 
     const examEnum = exam as ExamType;

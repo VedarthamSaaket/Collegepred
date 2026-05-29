@@ -3,7 +3,6 @@
 import { useState } from 'react';
 
 const EXAMS = [
-  { value: 'JEE_MAINS', label: 'JEE Mains' },
   { value: 'JEE_ADVANCED', label: 'JEE Advanced' },
   { value: 'EAMCET_TS', label: 'EAMCET (TS)' },
 ];
